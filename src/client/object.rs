@@ -304,7 +304,7 @@ impl<'a> ObjectClient<'a> {
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// use cloud_storage::Client;
     /// use cloud_storage::Object;
-    /// use futures::StreamExt;
+    /// use futures_util::stream::StreamExt;
     /// use tokio::fs::File;
     /// use tokio::io::{AsyncWriteExt, BufWriter};
     ///
@@ -314,6 +314,7 @@ impl<'a> ObjectClient<'a> {
     /// while let Some(byte) = stream.next().await {
     ///     file.write_all(&[byte.unwrap()]).await.unwrap();
     /// }
+    /// file.flush().await?;
     /// # Ok(())
     /// # }
     /// ```
@@ -345,7 +346,11 @@ impl<'a> ObjectClient<'a> {
         Ok(SizedByteStream::new(bytes, size))
     }
 
-    /// Obtains a single object with the specified name in the specified bucket.
+    /// Updates a single object with the specified name in the specified bucket with the new
+    /// information in `object`.
+    ///
+    /// Note that if the `name` or `bucket` fields are changed, the object will not be found.
+    /// See [`rewrite`] or [`copy`] for similar operations.
     /// ### Example
     /// ```no_run
     /// # #[tokio::main]
@@ -417,7 +422,7 @@ impl<'a> ObjectClient<'a> {
         }
     }
 
-    /// Obtains a single object with the specified name in the specified bucket.
+    /// Concatenates the contents of multiple objects into one.
     /// ### Example
     /// ```no_run
     /// # #[tokio::main]
@@ -477,7 +482,7 @@ impl<'a> ObjectClient<'a> {
         }
     }
 
-    /// Copy this object to the target bucket and path
+    /// Copy this object to the target bucket and path.
     /// ### Example
     /// ```no_run
     /// # #[tokio::main]
@@ -575,7 +580,7 @@ impl<'a> ObjectClient<'a> {
             .text()
             .await?;
 
-        let result: RewriteResponse = serde_json::from_str(dbg!(&s)).unwrap();
+        let result: RewriteResponse = serde_json::from_str(&s).unwrap();
         Ok(result.resource)
         // match result {
         // GoogleResponse::Success(s) => Ok(s.resource),
